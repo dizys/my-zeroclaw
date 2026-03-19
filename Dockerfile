@@ -16,12 +16,12 @@ RUN if [ -n "${ZEROCLAW_VERSION:-}" ]; then \
             --locked \
             --git https://github.com/zeroclaw-labs/zeroclaw.git \
             --tag "${ZEROCLAW_VERSION}" \
-            zeroclaw; \
+            zeroclawlabs; \
     else \
         cargo install \
             --locked \
             --git https://github.com/zeroclaw-labs/zeroclaw.git \
-            zeroclaw; \
+            zeroclawlabs; \
     fi
 
 # Stage 2: Runtime image
