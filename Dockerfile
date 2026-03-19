@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
     ca-certificates \
+    nodejs \
+    npm \
     && rm -rf /var/lib/apt/lists/*
 
 RUN if [ -n "${ZEROCLAW_VERSION:-}" ]; then \
