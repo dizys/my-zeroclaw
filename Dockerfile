@@ -68,6 +68,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     graphviz \
     mediainfo \
     patch \
+    chromium \
+    fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 # Install yt-dlp in an isolated virtual environment (supports both amd64 and arm64)
@@ -84,6 +86,8 @@ RUN mkdir -p /data/workspace
 ENV ZEROCLAW_WORKSPACE=/data/workspace
 ENV SHELL=/bin/bash
 ENV HOME=/data
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+ENV CHROMIUM_FLAGS="--no-sandbox --disable-gpu"
 
 WORKDIR /data
 
