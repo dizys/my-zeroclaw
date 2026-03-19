@@ -43,6 +43,31 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     npm \
     jq \
     unzip \
+    zip \
+    tar \
+    xz-utils \
+    openssh-client \
+    rsync \
+    gnupg \
+    build-essential \
+    ripgrep \
+    pandoc \
+    imagemagick \
+    sqlite3 \
+    htop \
+    less \
+    file \
+    bc \
+    tree \
+    socat \
+    dnsutils \
+    net-tools \
+    procps \
+    poppler-utils \
+    tesseract-ocr \
+    graphviz \
+    mediainfo \
+    patch \
     && rm -rf /var/lib/apt/lists/*
 
 # Install yt-dlp in an isolated virtual environment (supports both amd64 and arm64)
