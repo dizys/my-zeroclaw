@@ -1,0 +1,126 @@
+name: Build and Publish Docker Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - Dockerfile
+      - .github/workflows/docker-publish.yml
+  schedule:
+    # Check for new upstream zeroclaw releases daily at 06:00 UTC
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set image name
+        id: vars
+        run: |
+          owner_lc="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "image=ghcr.io/${owner_lc}/my-zeroclaw" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve zeroclaw version
+        id: version
+        run: |
+          set -euo pipefail
+
+          upstream_version="$(
+            git ls-remote --refs --tags https://github.com/zeroclaw-labs/zeroclaw.git 'v*' |
+              awk '{print $2}' |
+              sed 's#refs/tags/##' |
+              grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
+              sort -V |
+              tail -n 1
+          )"
+
+          if [ -z "$upstream_version" ]; then
+            echo "Failed to determine the latest upstream zeroclaw semver tag" >&2
+            exit 1
+          fi
+
+          already_built=false
+          if git ls-remote --exit-code --refs --tags origin "refs/tags/${upstream_version}" >/dev/null 2>&1; then
+            already_built=true
+          fi
+
+          # On a direct push to main (e.g., Dockerfile change), always rebuild.
+          if [ "${{ github.event_name }}" = "push" ]; then
+            already_built=false
+          fi
+
+          echo "upstream_version=$upstream_version"
+          echo "already_built=$already_built"
+
+          echo "upstream_version=$upstream_version" >> "$GITHUB_OUTPUT"
+          echo "already_built=$already_built" >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU
+        if: steps.version.outputs.already_built == 'false'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        if: steps.version.outputs.already_built == 'false'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: steps.version.outputs.already_built == 'false'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        if: steps.version.outputs.already_built == 'false'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.vars.outputs.image }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ steps.version.outputs.upstream_version }}
+            type=sha,prefix=sha-
+
+      - name: Build and push Docker image
+        if: steps.version.outputs.already_built == 'false'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            ZEROCLAW_VERSION=${{ steps.version.outputs.upstream_version }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Tag upstream version as built
+        if: steps.version.outputs.already_built == 'false'
+        run: |
+          set -euo pipefail
+
+          version="${{ steps.version.outputs.upstream_version }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git ls-remote --exit-code --refs --tags origin "refs/tags/${version}" >/dev/null 2>&1; then
+            echo "Tag ${version} already exists; skipping."
+            exit 0
+          fi
+
+          git tag "${version}"
+          git push origin "refs/tags/${version}"
