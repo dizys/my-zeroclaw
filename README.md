@@ -18,7 +18,7 @@ My custom [Zeroclaw](https://github.com/zeroclaw-labs/zeroclaw) Docker image wit
 | **Build** | build-essential (gcc, g++, make) |
 | **Media** | ffmpeg, yt-dlp, imagemagick, mediainfo |
 | **Documents** | pandoc, poppler-utils (pdftotext, etc.), tesseract-ocr |
-| **Data** | jq, sqlite3 |
+| **Data** | jq, sqlite3, postgresql-client (psql) |
 | **Search** | ripgrep |
 | **Visualization** | graphviz |
 | **Browser** | chromium, fonts-liberation |

@@ -53,6 +53,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ripgrep \
     pandoc \
     imagemagick \
+    postgresql-client \
     sqlite3 \
     htop \
     less \
