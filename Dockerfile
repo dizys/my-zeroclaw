@@ -54,6 +54,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pandoc \
     imagemagick \
     postgresql-client \
+    default-mysql-client \
+    redis-tools \
     sqlite3 \
     htop \
     less \
